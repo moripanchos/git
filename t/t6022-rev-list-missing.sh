@@ -16,7 +16,8 @@ test_expect_success 'create repository and alternate directory' '
 # We manually corrupt the repository, which means that the commit-graph may
 # contain references to already-deleted objects. We thus need to enable
 # commit-graph paranoia to not returned these deleted commits from the graph.
-export GIT_COMMIT_GRAPH_PARANOIA=true
+GIT_COMMIT_GRAPH_PARANOIA=true
+export GIT_COMMIT_GRAPH_PARANOIA
 
 for obj in "HEAD~1" "HEAD~1^{tree}" "HEAD:1.t"
 do
