@@ -85,7 +85,7 @@ static int merged_iter_advance_subiter(struct merged_iter *mi, size_t idx)
 static int merged_iter_next_entry(struct merged_iter *mi,
 				  struct reftable_record *rec)
 {
-	struct strbuf entry_key = STRBUF_INIT;
+	struct strbuf entry_key = STRBUF_INIT, k = STRBUF_INIT;
 	struct pq_entry entry = { 0 };
 	int err = 0;
 
@@ -108,30 +108,28 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 	reftable_record_key(&entry.rec, &entry_key);
 	while (!merged_iter_pqueue_is_empty(mi->pq)) {
 		struct pq_entry top = merged_iter_pqueue_top(mi->pq);
-		struct strbuf k = STRBUF_INIT;
-		int err = 0, cmp = 0;
+		int cmp = 0;
 
 		reftable_record_key(&top.rec, &k);
 
 		cmp = strbuf_cmp(&k, &entry_key);
-		strbuf_release(&k);
-
-		if (cmp > 0) {
+		if (cmp > 0)
 			break;
-		}
 
 		merged_iter_pqueue_remove(&mi->pq);
 		err = merged_iter_advance_subiter(mi, top.index);
-		if (err < 0) {
-			return err;
-		}
+		if (err < 0)
+			goto done;
 		reftable_record_release(&top.rec);
 	}
 
 	reftable_record_copy_from(rec, &entry.rec, hash_size(mi->hash_id));
+
+done:
 	reftable_record_release(&entry.rec);
 	strbuf_release(&entry_key);
-	return 0;
+	strbuf_release(&k);
+	return err;
 }
 
 static int merged_iter_next(struct merged_iter *mi, struct reftable_record *rec)
